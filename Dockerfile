@@ -1,28 +1,29 @@
-FROM python:3.10-slim-buster
+# Use maintained base image
+FROM python:3.10-slim-bookworm
 
-RUN apt-get update && apt-get install -y \
+# Set working directory
+WORKDIR /code
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     libpq-dev \
-    && rm -rf /var/lib/apt/lists/*
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-RUN pip install --upgrade pip 
-#copy to code directory
-COPY . /code 
+# Upgrade pip
+RUN pip install --upgrade pip
 
-#set permissions
+# Copy all files into the image
+COPY . /code
 
-RUN chmod +x /code
+# Install Python dependencies
+RUN pip install --no-cache-dir -r /code/requirements.txt
 
-RUN pip install --no-cache-dir --upgrade -r code/requirements.txt
+# Set environment variable (optional if you need module-level imports)
+ENV PYTHONPATH=/code
 
+# Expose the port (if using a Flask/FastAPI app etc.)
 EXPOSE 8005
 
-WORKDIR /code
-
-ENV PYTHONPATH "${PYTHONPATH}:/code"
-
-CMD pip install -e .
-
-CMD ["python","prediction_model/training_pipeline.py"]
-WORKDIR /code
-CMD ["python","main.py"]
+# Default command: Run main application
+CMD ["python", "main.py"]
